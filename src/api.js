@@ -1,16 +1,10 @@
 import axios from "axios";
 
 function getBaseURL() {
-  // if (import.meta.env.VITE_API_BASE_URL) {
-  //   return `${import.meta.env.VITE_API_BASE_URL}/api`;
-  // }
-  // const isLocal =
-  //   window.location.hostname === "localhost" ||
-  //   window.location.hostname === "127.0.0.1";
-  // if (!isLocal) {
-  //   return "https://blog-automation-1-afvy.onrender.com/api";
-  // }
-  return "http://localhost:5000/api";
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return `${import.meta.env.VITE_API_BASE_URL}/api`;
+  }
+  return "http://localhost:5003/api";
 }
 
 const api = axios.create({
