@@ -14,6 +14,24 @@ const FUNNEL_META = {
   "3_CONVERSION": { label: "Conversion", cls: "bg-rose-400/10 text-rose-300 border-rose-400/20" },
 };
 
+// Course tag for per-course messages (email/WhatsApp). Blogs stay untagged.
+const COURSE_META = {
+  CBA: { cls: "bg-sky-400/10 text-sky-300 border-sky-400/30" },
+  DGM: { cls: "bg-orange-400/10 text-orange-300 border-orange-400/30" },
+  TBM: { cls: "bg-slate-400/10 text-slate-300 border-slate-400/30" },
+};
+
+/** CBA/DGM course badge — only rendered for email/whatsapp slots. */
+function CourseTag({ course, channel }) {
+  if (!course || channel === "WEBSITE") return null;
+  const meta = COURSE_META[course] || COURSE_META.CBA;
+  return (
+    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${meta.cls}`}>
+      {course}
+    </span>
+  );
+}
+
 function parseTimeframeDays(timeframe) {
   const match = /\d+/.exec(timeframe || "");
   return match ? parseInt(match[0], 10) : 15;
@@ -80,6 +98,7 @@ function ItemChip({ item, onOpen }) {
       </div>
       <p className="text-xs text-slate-100 leading-snug line-clamp-2 font-medium">{item.label || "Untitled"}</p>
       <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+        <CourseTag course={item.course} channel={item.channel} />
         {item.funnelStage && FUNNEL_META[item.funnelStage] && (
           <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${FUNNEL_META[item.funnelStage].cls}`}>
             {FUNNEL_META[item.funnelStage].label}
@@ -224,6 +243,11 @@ function DetailModal({
             <span className={`text-[10px] font-bold uppercase tracking-widest ${meta.text} flex items-center gap-1 mb-2`}>
               <span>{meta.icon}</span>
               {meta.label} · {item.time}
+              {item.course && item.channel !== "WEBSITE" && (
+                <span className={`ml-1 text-[9px] px-1.5 py-0.5 rounded border ${COURSE_META[item.course]?.cls || COURSE_META.CBA.cls}`}>
+                  {item.course}
+                </span>
+              )}
             </span>
             <h2 className="text-lg font-bold text-white leading-snug">{item.label}</h2>
           </div>

@@ -104,11 +104,26 @@ export default function PreviewModal({ item, type, onClose, onAction, onSaveEdit
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-[#0e1420] px-6 py-4 border-b border-white/5 flex items-start justify-between gap-4">
-          <div>
-            <StatusPill status={item.status} />
-            <h2 className="text-xl font-bold text-white mt-2">{title}</h2>
-          </div>
           <div className="flex items-center gap-2">
+            <StatusPill status={item.status} />
+            {type !== "blog" && item.course && (
+              <span
+                className={`text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${
+                  item.course === "DGM"
+                    ? "bg-orange-400/10 text-orange-300 border-orange-400/30"
+                    : item.course === "TBM"
+                    ? "bg-slate-400/10 text-slate-300 border-slate-400/30"
+                    : "bg-sky-400/10 text-sky-300 border-sky-400/30"
+                }`}
+              >
+                {item.course}
+              </span>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl font-bold text-white truncate">{title}</h2>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
             {!isEditing && (
               <button
                 type="button"
