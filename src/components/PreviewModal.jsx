@@ -127,14 +127,13 @@ function WhatsAppVisualPreview({ message, headline }) {
 
 function EmailVisualPreview({ item }) {
   const subject = item.subject || item.title || "Admissions Notification";
-  const heading = item.heading || "Key Highlights & Program Details";
-  const intro = item.intro || "At Charters Union of Business, we focus on experiential learning and live projects to help you build real-world skills with zero friction.";
+  const heading = item.heading || "Experience Careers Through Live Simulations:";
+  const intro = item.intro || "We are excited to announce that admissions are now open for the Certified Business Accountant (CBA™ / MBA), where students explore hands-on corporate workflows through live simulations and paid internships.";
   const bullets = Array.isArray(item.bullets) ? item.bullets : (item.bullets ? [item.bullets] : []);
   const simulations = Array.isArray(item.simulations) ? item.simulations : [];
   const programDetails = item.programDetails || null;
   const eventDetails = item.eventDetails || null;
   const tableData = item.tableData || null;
-  const deadline = item.deadline || "";
   const closingNotice = item.closingNotice || "";
 
   const isDGM = (item.course || item.tag || subject || "").toUpperCase().includes("DGM") || (item.course || "").toUpperCase().includes("MARKETING");
@@ -148,258 +147,179 @@ function EmailVisualPreview({ item }) {
   if (slotKey.includes("5") || slotKey.endsWith("_5")) format = "urgency";
   if (slotKey.includes("6") || slotKey.endsWith("_6")) format = "final_call";
 
-  const statsList = Array.isArray(item.stats) && item.stats.length > 0 ? item.stats : [
-    { label: "HIGHEST CTC", value: isDGM ? "₹24.50 LPA" : "₹26.50 LPA" },
-    { label: "AVERAGE CTC", value: isDGM ? "₹8.50 LPA" : "₹10.20 LPA" },
-    { label: "PLACEMENT RATE", value: isDGM ? "92%" : "97.7%" },
-    { label: "RECRUITERS", value: "1500+" }
-  ];
+  const applyUrl = "https://chartersunion.com/apply";
 
   return (
-    <div className="my-4 rounded-xl border border-slate-300 bg-[#fbfbfb] text-slate-900 shadow-2xl overflow-hidden max-w-2xl mx-auto">
-      {/* Subject Bar */}
-      <div className="bg-slate-100 border-b border-slate-200 px-6 py-3">
+    <div className="my-4 rounded-xl border border-slate-300 bg-[#f5f5f5] text-slate-900 shadow-xl overflow-hidden max-w-2xl mx-auto p-4 sm:p-6">
+      {/* Subject Header */}
+      <div className="bg-slate-100 border border-slate-200 rounded-lg px-4 py-2.5 mb-4">
         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Subject Line</div>
         <div className="text-sm font-bold text-slate-900 mt-0.5">{subject}</div>
       </div>
 
-      {/* Official Header Image (unnamed.png) */}
-      <div className="bg-white border-b-2 border-[#a6192e] px-6 py-4 flex items-center justify-between">
-        <img src="/unnamed.png" alt="Charters Union of Business" className="h-10 w-auto object-contain" />
-        <div className="text-[10px] font-bold uppercase tracking-widest text-[#a6192e] border border-[#a6192e]/30 bg-red-50 px-2.5 py-1 rounded">
-          {format.toUpperCase().replace("_", " ")} STAGE
+      {/* Main Clean Email White Card */}
+      <div className="bg-white border border-slate-200 rounded-md overflow-hidden shadow-xs">
+        {/* Top Header Logo with Clean Red Divider */}
+        <div className="bg-white border-b-2 border-[#b01b2e] px-6 py-4 flex items-center justify-center">
+          <img src="/unnamed.png" alt="Charters Union of Business" className="h-10 w-auto object-contain" />
         </div>
-      </div>
 
-      <div className="p-6 bg-white space-y-4">
-        <p className="text-sm font-semibold text-slate-900">Dear Student,</p>
-        <p className="text-sm text-slate-700 leading-relaxed">{intro}</p>
+        <div className="p-6 sm:p-8 space-y-4 text-[14px] text-[#222222] leading-relaxed">
+          <p className="font-semibold text-slate-900">Dear Student,</p>
+          <p className="text-slate-800 leading-relaxed">{formatWhatsAppInline(intro)}</p>
 
-        {/* ── FORMAT 1: SIMULATIONS & CURRICULUM (Day 1 Slot 1) ── */}
-        {format === "simulation" && (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 pb-2">
-              {statsList.map((st, idx) => (
-                <div key={idx} className="rounded-lg border border-slate-200 bg-[#fdfafb] p-3 text-center shadow-xs">
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{st.label}</div>
-                  <div className="text-base font-black text-[#a6192e] mt-1">{st.value}</div>
+          {/* ── FORMAT 1: SIMULATIONS & CURRICULUM ── */}
+          {format === "simulation" && (
+            <>
+              <div className="pt-2">
+                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                  <u>{heading}</u>
                 </div>
-              ))}
-            </div>
-
-            <div className="pt-2">
-              <div className="text-sm font-bold text-slate-900 mb-2.5 underline text-[#111]">
-                <u>Experience Careers Through Live Simulations:</u>
-              </div>
-              <ol className="space-y-2">
-                {(simulations.length > 0 ? simulations : bullets).map((s, idx) => {
-                  const clean = String(s).replace(/^•\s*/, "").replace(/\*\*/g, "*");
-                  const parts = clean.split(/(\*[^*]+\*)/g).map((p, pIdx) => {
-                    if (p.startsWith("*") && p.endsWith("*")) {
-                      return <strong key={pIdx} className="font-bold text-slate-900">{p.slice(1, -1)}</strong>;
-                    }
-                    return p;
-                  });
-                  return (
-                    <li key={idx} className="text-xs text-slate-700 flex items-start gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                      <span className="font-bold text-[#a6192e]">{idx + 1}.</span>
-                      <span className="leading-relaxed">{parts}</span>
+                <ol className="list-decimal pl-5 space-y-2 text-slate-800">
+                  {(simulations.length > 0 ? simulations : bullets).map((s, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      {formatWhatsAppInline(String(s).replace(/^\d+\.\s*/, ""))}
                     </li>
-                  );
-                })}
-              </ol>
-            </div>
-
-            <div className="pt-2">
-              <div className="text-sm font-bold text-slate-900 mb-2 underline text-[#111]">
-                <u>Programme Details:</u>
+                  ))}
+                </ol>
               </div>
-              <div className="bg-[#fbfbfb] border border-slate-200 rounded-lg p-3.5 text-xs text-slate-700 space-y-1.5 leading-relaxed">
-                <div><strong>Duration:</strong> {programDetails?.duration || "7 Months (3 Months Foundation + 4 Months In-Class Paid Internship)"}</div>
-                <div><strong>Mode:</strong> {programDetails?.mode || "In-Class (Kolkata Hub) / Hybrid (Live Supervised Labs)"}</div>
-                <div><strong>Eligibility:</strong> {programDetails?.eligibility || "Final-Year Students / Graduates / Working Professionals"}</div>
-                <div><strong>Fee & Financing:</strong> {programDetails?.feeFinancing || "INR 35,000 – 50,000 | No-Cost EMI from INR 5,555/mo"}</div>
-                <div><strong>Scholarship:</strong> {programDetails?.scholarship || "Up to INR 16,000 (Round 1 Intake)"}</div>
+
+              <div className="pt-2">
+                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                  <u>Programme Details:</u>
+                </div>
+                <div className="text-xs sm:text-sm text-slate-800 space-y-1 leading-relaxed">
+                  <div><strong>Dates:</strong> {programDetails?.duration || "7 Months (3 Months Foundation + 4 Months In-Class Paid Internship)"}</div>
+                  <div><strong>Mode:</strong> {programDetails?.mode || "In-Class (Kolkata Hub) / Hybrid (Live Supervised Labs)"}</div>
+                  <div><strong>Eligibility:</strong> {programDetails?.eligibility || "Final-Year Students / Graduates / Working Professionals"}</div>
+                  <div><strong>Fee:</strong> {programDetails?.feeFinancing || "INR 35,000 – 50,000 | No-Cost EMI from INR 5,555/mo"}</div>
+                  <div><strong>Scholarship:</strong> {programDetails?.scholarship || "Up to INR 16,000 (Round 1 Intake)"}</div>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        {/* ── FORMAT 2: MASTERCLASS & WEBINAR (Day 1 Slot 2) ── */}
-        {format === "webinar" && (
-          <>
-            <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-[#a6192e]/20 rounded-xl p-4 my-2">
-              <div className="text-xs font-bold uppercase tracking-wider text-[#a6192e] mb-1">📅 Live Admissions Masterclass</div>
-              <div className="text-base font-black text-slate-900 mb-2">{eventDetails?.topic || "Inside the Curriculum & Practical Career Readiness"}</div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 pt-2 border-t border-slate-200/80">
-                <div><strong>Date:</strong> {eventDetails?.date || "Upcoming Cohort Briefing"}</div>
-                <div><strong>Time:</strong> {eventDetails?.time || "10:00 AM – 11:30 AM"}</div>
-                <div className="col-span-2"><strong>Platform:</strong> {eventDetails?.platform || "Campus & Live Interactive Zoom"}</div>
+          {/* ── FORMAT 2: MASTERCLASS & WEBINAR ── */}
+          {format === "webinar" && (
+            <>
+              <div className="pt-2">
+                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                  <u>{heading}</u>
+                </div>
+                <div className="text-xs sm:text-sm text-slate-800 space-y-1 leading-relaxed mb-3">
+                  <div><strong>Date &amp; Time:</strong> {eventDetails?.date || "Upcoming Cohort Briefing"} ({eventDetails?.time || "10:00 AM – 11:30 AM"})</div>
+                  <div><strong>Platform:</strong> {eventDetails?.platform || "Campus & Live Interactive Zoom"}</div>
+                  <div><strong>Session Topic:</strong> {eventDetails?.topic || "Inside the Curriculum: Real-world mastery"}</div>
+                </div>
+
+                <div className="text-[14px] font-bold text-slate-900 mb-2">In this session we will cover:</div>
+                <ul className="list-disc pl-5 space-y-1.5 text-slate-800">
+                  {bullets.map((b, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      {formatWhatsAppInline(b)}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
+            </>
+          )}
 
-            <div className="pt-2">
-              <div className="text-sm font-bold text-slate-900 mb-2">Session Highlights & What You Will Learn:</div>
-              <ul className="space-y-2">
-                {bullets.map((b, idx) => (
-                  <li key={idx} className="text-xs text-slate-700 flex items-start gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                    <span className="font-bold text-[#a6192e]">•</span>
-                    <span>{b.replace(/\*\*/g, "")}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </>
-        )}
-
-        {/* ── FORMAT 3: TABULAR COMPARISON & EVENTS (Day 2 Slot 1) ── */}
-        {format === "table" && (
-          <>
-            <div className="pt-2">
-              <div className="text-sm font-bold text-slate-900 mb-2.5">Admissions & Practical Lab Schedule:</div>
-              <div className="overflow-x-auto rounded-lg border border-slate-300">
-                <table className="w-full text-left text-xs border-collapse bg-white">
-                  <thead>
-                    <tr className="bg-slate-100 border-b border-slate-300 text-slate-800 font-bold">
-                      <th className="p-2.5 border-r border-slate-200">Event Type</th>
-                      <th className="p-2.5 border-r border-slate-200">Topic</th>
-                      <th className="p-2.5 border-r border-slate-200">Date & Time</th>
-                      <th className="p-2.5">Pass</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {(tableData?.rows || [
-                      ["Admissions Webinar", isDGM ? "Performance Marketing & AI" : "Inside CBA Curriculum & CA/CFA Pathways", "Thu, 7 PM – 8 PM", "Free Access"],
-                      ["Campus Immersion", isDGM ? "Live Ad Studio Lab Tour" : "Live ERP & Financial Lab Tour", "Sat, 11 AM – 1 PM", "Free Access"],
-                      ["Career Masterclass", isDGM ? "High-Paying Agency Roles" : "Securing Big 4 Corporate Offers", "Sun, 11 AM – 12 PM", "Free Access"]
-                    ]).map((r, rIdx) => (
-                      <tr key={rIdx} className={rIdx % 2 === 1 ? "bg-slate-50" : "bg-white"}>
-                        <td className="p-2.5 font-bold text-slate-900 border-r border-slate-200">{r[0]}</td>
-                        <td className="p-2.5 text-slate-700 border-r border-slate-200">{r[1]}</td>
-                        <td className="p-2.5 text-slate-600 border-r border-slate-200 whitespace-nowrap">{r[2]}</td>
-                        <td className="p-2.5 font-bold text-[#a6192e] underline whitespace-nowrap">LINK</td>
+          {/* ── FORMAT 3: TABULAR COMPARISON & EVENTS (Image 6 Style) ── */}
+          {format === "table" && (
+            <>
+              <div className="pt-2">
+                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                  <u>{heading}</u>
+                </div>
+                <div className="overflow-x-auto my-3">
+                  <table className="w-full text-left text-xs border-collapse border border-black bg-white">
+                    <thead>
+                      <tr className="bg-white border-b border-black text-black font-bold text-center">
+                        <th className="p-2.5 border-r border-black">Event Type</th>
+                        <th className="p-2.5 border-r border-black">Event</th>
+                        <th className="p-2.5 border-r border-black whitespace-nowrap">Date &amp; Time</th>
+                        <th className="p-2.5 border-r border-black whitespace-nowrap">Venue/Platform</th>
+                        <th className="p-2.5 whitespace-nowrap">Registration Link</th>
                       </tr>
+                    </thead>
+                    <tbody>
+                      {(tableData?.rows || [
+                        ["Admissions Webinar", isDGM ? "Inside the Curriculum for DGM with GrowthX & Meta Pathways" : "Inside the Curriculum for CBA with CA/CFA Pathways", "14th January, 7 PM – 8 PM", "Zoom", "Link"],
+                        ["Campus Visit", isDGM ? "Campus Tour & Live Performance Lab Walkthrough" : "Campus Tour & Live ERP Lab Walkthrough", "17th January, 11 AM – 1 PM", "Kolkata Hub / Zoom", "Link"],
+                        ["Admissions Webinar", isDGM ? "Agency vs Brand Roles: What is better for you?" : "Corporate vs Consulting: What is better for you?", "18th January, 11 AM – 12 PM", "Zoom", "Link"]
+                      ]).map((r, rIdx) => (
+                        <tr key={rIdx} className="border-b border-black">
+                          <td className="p-2.5 font-bold text-black border-r border-black text-center">{r[0]}</td>
+                          <td className="p-2.5 text-black border-r border-black">{r[1]}</td>
+                          <td className="p-2.5 text-black border-r border-black text-center whitespace-nowrap">{r[2]}</td>
+                          <td className="p-2.5 text-black border-r border-black text-center whitespace-nowrap">{r[3] || "Zoom"}</td>
+                          <td className="p-2.5 font-bold text-[#b01b2e] underline text-center whitespace-nowrap">Link</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {bullets.length > 0 && (
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-800 pt-2">
+                    {bullets.map((b, idx) => (
+                      <li key={idx} className="leading-relaxed">
+                        {formatWhatsAppInline(b)}
+                      </li>
                     ))}
-                  </tbody>
-                </table>
+                  </ul>
+                )}
               </div>
-            </div>
+            </>
+          )}
 
-            <ul className="space-y-1.5 pt-2">
-              {bullets.map((b, idx) => (
-                <li key={idx} className="text-xs text-slate-600 flex items-start gap-2">
-                  <span className="font-bold text-[#a6192e]">•</span>
-                  <span>{b.replace(/\*\*/g, "")}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-
-        {/* ── FORMAT 4: CASE STUDY & SALARY ROI (Day 2 Slot 2) ── */}
-        {format === "case_study" && (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 pb-2">
-              {statsList.map((st, idx) => (
-                <div key={idx} className="rounded-lg border border-slate-200 bg-[#fdfafb] p-3 text-center shadow-xs">
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{st.label}</div>
-                  <div className="text-base font-black text-[#a6192e] mt-1">{st.value}</div>
+          {/* ── FORMAT 4 & 5 & 6: CASE STUDY / URGENCY / CLOSING NOTICE ── */}
+          {(format === "case_study" || format === "urgency" || format === "final_call") && (
+            <>
+              <div className="pt-2">
+                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                  <u>{heading}</u>
                 </div>
-              ))}
-            </div>
+                {closingNotice && (
+                  <p className="text-slate-800 mb-3">{formatWhatsAppInline(closingNotice)}</p>
+                )}
+                <ul className="list-disc pl-5 space-y-2 text-slate-800">
+                  {bullets.map((b, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      {formatWhatsAppInline(b)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
 
-            <div className="pt-2">
-              <div className="text-sm font-bold text-slate-900 mb-2">Candidate Transformation Inflection Points:</div>
-              <ul className="space-y-2">
-                {bullets.map((b, idx) => (
-                  <li key={idx} className="text-xs text-slate-700 flex items-start gap-2.5 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                    <span className="w-5 h-5 rounded-full bg-[#a6192e] text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0 mt-0.5">
-                      {idx + 1}
-                    </span>
-                    <span className="leading-relaxed">{b.replace(/\*\*/g, "")}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </>
-        )}
+          <p className="text-xs sm:text-sm text-slate-700 pt-2">
+            Check out the Programme Brochure <a href={applyUrl} target="_blank" rel="noreferrer" className="text-[#b01b2e] underline font-bold">here</a>.
+          </p>
 
-        {/* ── FORMAT 5: URGENCY & SCHOLARSHIPS (Day 3 Slot 1) ── */}
-        {format === "urgency" && (
-          <>
-            <div className="bg-red-50 border-2 border-[#a6192e] rounded-xl p-4 my-2 text-center">
-              <div className="text-xs font-black uppercase tracking-widest text-[#a6192e]">🚨 Priority Application Alert</div>
-              <div className="text-base font-black text-slate-900 mt-1">3 Days Left for Round 1 Intake & Scholarship Allocation</div>
-              <div className="text-xs text-slate-600 mt-1">Deadline: <strong>{deadline || "Upcoming Batch Intake (Strict Deadline)"}</strong></div>
-            </div>
+          {/* Clean Red Outline Button */}
+          <div className="text-center py-4">
+            <a
+              href={applyUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block px-8 py-2.5 border-1.5 border-[#b01b2e] text-[#b01b2e] font-bold text-sm rounded bg-white hover:bg-red-50 transition"
+            >
+              Click to Register
+            </a>
+          </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 pb-2">
-              {statsList.map((st, idx) => (
-                <div key={idx} className="rounded-lg border border-slate-200 bg-white p-3 text-center shadow-xs">
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{st.label}</div>
-                  <div className="text-base font-black text-[#a6192e] mt-1">{st.value}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2">
-              <div className="text-sm font-bold text-slate-900 mb-2">Round 1 Priority Benefits:</div>
-              <ul className="space-y-2">
-                {bullets.map((b, idx) => (
-                  <li key={idx} className="text-xs text-slate-700 flex items-start gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                    <span className="font-bold text-emerald-600">✓</span>
-                    <span>{b.replace(/\*\*/g, "")}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </>
-        )}
-
-        {/* ── FORMAT 6: FINAL ADMISSIONS NOTICE (Day 3 Slot 2) ── */}
-        {format === "final_call" && (
-          <>
-            <div className="bg-slate-900 text-white rounded-xl p-4 my-2">
-              <div className="text-xs font-bold uppercase tracking-wider text-amber-400">Office of Admissions Notice</div>
-              <div className="text-base font-bold mt-1">Batch Allocation Closing Notice</div>
-              <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">{closingNotice || "Round 1 Admissions for Charters Union will officially close this week. All remaining corporate placement seats are allocated on a first-interview basis."}</p>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 pb-2">
-              {statsList.map((st, idx) => (
-                <div key={idx} className="rounded-lg border border-slate-200 bg-[#fdfafb] p-3 text-center shadow-xs">
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{st.label}</div>
-                  <div className="text-base font-black text-[#a6192e] mt-1">{st.value}</div>
-                </div>
-              ))}
-            </div>
-
-            <ul className="space-y-2 pt-2">
-              {bullets.map((b, idx) => (
-                <li key={idx} className="text-xs text-slate-700 flex items-start gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                  <span className="font-bold text-[#a6192e]">•</span>
-                  <span>{b.replace(/\*\*/g, "")}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-
-        {/* Red-Bordered CTA Button */}
-        <div className="text-center pt-4 pb-2">
-          <a
-            href="https://chartersunion.com/apply"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-block px-8 py-3 rounded-lg border-2 border-[#a6192e] bg-white text-[#a6192e] font-black text-sm uppercase tracking-wider hover:bg-[#a6192e] hover:text-white transition-all shadow-sm active:scale-98"
-          >
-            [ Click to Register ]
-          </a>
-        </div>
-
-        {/* Helpline Footer */}
-        <div className="border-t border-slate-200 pt-3 text-center text-xs text-slate-500">
-          📞 Admissions Helpline: <strong className="text-slate-900">+91 9836465083</strong> | 🌐 <span className="text-[#a6192e] font-medium">chartersunion.com</span>
+          {/* Helpline and Footer */}
+          <div className="pt-4 border-t border-slate-200 text-xs text-slate-600 space-y-3">
+            <p>
+              For any queries, please reach out to us at <span className="text-[#b01b2e] underline">admissions@chartersunion.com</span> or call <strong className="text-[#b01b2e]">+91 9836465083</strong>.
+            </p>
+            <p className="text-slate-800">
+              Warm regards,<br />
+              <strong>Charters Union Admissions</strong>
+            </p>
+          </div>
         </div>
       </div>
     </div>
