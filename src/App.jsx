@@ -64,7 +64,18 @@ export default function App() {
     setTimeout(() => setToast(null), 2800);
   }
 
-  async function handleAction(type, item, newStatus) {
+  async function handleAction(type, item, rawStatus) {
+    const statusMap = {
+      approve: "approved",
+      approved: "approved",
+      reject: "rejected",
+      rejected: "rejected",
+      publish: "published",
+      published: "published",
+      pending: "pending"
+    };
+    const newStatus = statusMap[rawStatus] || rawStatus;
+
     setBusyId(item._id);
     try {
       const updated = await updateStatus(type, item._id, newStatus);
