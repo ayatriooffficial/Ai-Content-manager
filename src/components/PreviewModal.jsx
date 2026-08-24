@@ -52,42 +52,100 @@ function buildDraft(item, type) {
   return { ...item };
 }
 
-function formatWhatsAppInline(text) {
-  if (!text) return text;
-  // Clean any raw <u> tags if legacy data exists
-  let sanitized = text.replace(/<\/?u>/gi, "");
+const BOLD_KEYWORDS = [
+  "Charters Union of Business", "Charters Union", "CBA™", "DGM™", "TBM™", "CBA", "DGM", "TBM",
+  "Certified Business Accountant", "Digital Growth & Marketing", "Technology & Business Management",
+  "AI Career Engine", "experiential learning", "hands-on simulations", "real-world simulations",
+  "100% In-Class Paid Internships", "in-class paid internships", "SAP S/4HANA", "TallyPrime",
+  "GST", "TDS", "GA4", "Meta", "Google Ads", "ROAS", "KPMG", "PwC", "EY", "Deloitte",
+  "Saudi Aramco", "₹5,555", "₹16,000", "No-Cost EMI", "scholarship", "Scholarship",
+  "97.7%", "92%", "98%", "95%", "placement rate", "Placement Rate", "26.5 LPA", "24.5 LPA",
+  "38.5 LPA", "CTC", "salary jump", "Salary Jump"
+];
 
-  // Split tokens: ```monospace```, `inline_code`, *bold*, _italics_, ~strikethrough~
-  const tokenRegex = /(```[\s\S]*?```|`[^`]+`|\*[^*]+\*|_[^_]+_|~[^~]+~)/g;
-  const parts = sanitized.split(tokenRegex);
+function boldKeywords(text) {
+  if (!text) return text;
+  let out = String(text);
+  for (const kw of BOLD_KEYWORDS) {
+    const needsWordBoundary = kw.replace(/[^a-zA-Z0-9]/g, "").length <= 4;
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = needsWordBoundary ? `(?<![\\w*])${escaped}(?![\\w])` : escaped;
+    const re = new RegExp(`(?<!\\*)\\*?${pattern}\\*?(?!\\*)`, "gi");
+    out = out.replace(re, (m) => {
+      const clean = m.replace(/\*/g, "").trim();
+      if (!clean) return m;
+      return `**${clean}**`;
+    });
+  }
+  out = out.replace(/\*\*(\*+)/g, "**").replace(/(\*+)\*\*/g, "**");
+  return out;
+}
+
+function formatRichText(text, isDark = false) {
+  if (!text) return text;
+  let str = boldKeywords(String(text));
+  
+  // Clean raw HTML tags if present in data
+  str = str.replace(/<\/?u>/gi, "");
+  str = str.replace(/<strong>(.*?)<\/strong>/gi, "**$1**");
+  str = str.replace(/<b>(.*?)<\/b>/gi, "**$1**");
+  str = str.replace(/<em>(.*?)<\/em>/gi, "_$1_");
+  str = str.replace(/<i>(.*?)<\/i>/gi, "_$1_");
+
+  // Match **double-star bold**, *single-star bold*, `code`, _italics_, ~strikethrough~
+  const tokenRegex = /(```[\s\S]*?```|`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|~[^~]+~)/g;
+  const parts = str.split(tokenRegex);
 
   return parts.map((part, idx) => {
     if (!part) return null;
     if (part.startsWith("```") && part.endsWith("```")) {
       return (
-        <code key={idx} className="font-mono bg-[#111b21] text-[#25d366] px-1 py-0.5 rounded text-xs">
+        <code key={idx} className={`font-mono px-1 py-0.5 rounded text-xs ${isDark ? "bg-[#111b21] text-[#25d366]" : "bg-slate-100 text-slate-800"}`}>
           {part.slice(3, -3)}
         </code>
       );
     }
     if (part.startsWith("`") && part.endsWith("`")) {
       return (
-        <code key={idx} className="font-mono bg-[#111b21] text-[#25d366] px-1 py-0.5 rounded text-xs">
+        <code key={idx} className={`font-mono px-1 py-0.5 rounded text-xs ${isDark ? "bg-[#111b21] text-[#25d366]" : "bg-slate-100 text-slate-800"}`}>
           {part.slice(1, -1)}
         </code>
       );
     }
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={idx} className={`font-bold ${isDark ? "text-white" : "text-slate-900"}`}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
     if (part.startsWith("*") && part.endsWith("*")) {
-      return <strong key={idx} className="font-bold text-white">{part.slice(1, -1)}</strong>;
+      return (
+        <strong key={idx} className={`font-bold ${isDark ? "text-white" : "text-slate-900"}`}>
+          {part.slice(1, -1)}
+        </strong>
+      );
     }
     if (part.startsWith("_") && part.endsWith("_")) {
-      return <em key={idx} className="italic text-slate-300">{part.slice(1, -1)}</em>;
+      return (
+        <em key={idx} className={`italic ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+          {part.slice(1, -1)}
+        </em>
+      );
     }
     if (part.startsWith("~") && part.endsWith("~")) {
-      return <del key={idx} className="line-through text-slate-400">{part.slice(1, -1)}</del>;
+      return (
+        <del key={idx} className="line-through text-slate-400">
+          {part.slice(1, -1)}
+        </del>
+      );
     }
     return part;
   });
+}
+
+function formatWhatsAppInline(text) {
+  return formatRichText(text, true);
 }
 
 function WhatsAppVisualPreview({ message, headline }) {
@@ -101,7 +159,7 @@ function WhatsAppVisualPreview({ message, headline }) {
           <span className="inline-block h-2 w-2 rounded-full bg-[#00a884]"></span>
           WhatsApp Candidate View
         </span>
-        <span>+91 9836465083</span>
+        <span>Official Admissions Channel</span>
       </div>
 
       <div className="flex justify-start">
@@ -125,177 +183,224 @@ function WhatsAppVisualPreview({ message, headline }) {
   );
 }
 
+function cleanBulletText(str) {
+  return String(str || "")
+    .replace(/^\d+[\.\)]\s*/, "") // remove leading "1. " or "1) "
+    .replace(/^(Core\s*Point\s*\d+:?|Point\s*\d+:?)\s*/i, "") // strip "Core Point 1:"
+    .trim();
+}
+
 function EmailVisualPreview({ item }) {
-  const subject = item.subject || item.title || "Admissions Notification";
-  const heading = item.heading || "Experience Careers Through Live Simulations:";
-  const intro = item.intro || "We are excited to announce that admissions are now open for the Certified Business Accountant (CBA™ / MBA), where students explore hands-on corporate workflows through live simulations and paid internships.";
-  const bullets = Array.isArray(item.bullets) ? item.bullets : (item.bullets ? [item.bullets] : []);
-  const simulations = Array.isArray(item.simulations) ? item.simulations : [];
+  const subject = item.subject || item.title || "";
+  const heading = item.heading || "";
+  const intro = item.intro || "";
+  const rawBullets = Array.isArray(item.bullets) ? item.bullets : (item.bullets ? [item.bullets] : []);
+  const rawSimulations = Array.isArray(item.simulations) ? item.simulations : [];
+  const bullets = rawBullets.map(cleanBulletText).filter(Boolean);
+  const simulations = rawSimulations.map(cleanBulletText).filter(Boolean);
   const programDetails = item.programDetails || null;
   const eventDetails = item.eventDetails || null;
   const tableData = item.tableData || null;
   const closingNotice = item.closingNotice || "";
+  const solution = item.solution || "";
+  const applyUrl = item.ctaUrl || "https://chartersunion.com/apply";
+  const brochureUrl = item.brochureUrl || "";
+  const ctaText = item.ctaText || "Click to Register";
 
   const isDGM = (item.course || item.tag || subject || "").toUpperCase().includes("DGM") || (item.course || "").toUpperCase().includes("MARKETING");
   const slotKey = String(item.slotKey || "").toLowerCase();
   
-  // Detect format
-  let format = item.format || "simulation";
-  if (slotKey.includes("2") || slotKey.endsWith("_2")) format = "webinar";
-  if (slotKey.includes("3") || slotKey.endsWith("_3")) format = "table";
-  if (slotKey.includes("4") || slotKey.endsWith("_4")) format = "case_study";
-  if (slotKey.includes("5") || slotKey.endsWith("_5")) format = "urgency";
-  if (slotKey.includes("6") || slotKey.endsWith("_6")) format = "final_call";
+  // Respect item.format directly; only deduce from slotKey if item.format is absent
+  let format = item.format;
+  if (!format) {
+    if (slotKey.includes("2") || slotKey.endsWith("_2")) format = "webinar";
+    else if (slotKey.includes("3") || slotKey.endsWith("_3")) format = "table";
+    else if (slotKey.includes("4") || slotKey.endsWith("_4")) format = "case_study";
+    else if (slotKey.includes("5") || slotKey.endsWith("_5")) format = "urgency";
+    else if (slotKey.includes("6") || slotKey.endsWith("_6")) format = "final_call";
+    else format = "simulation";
+  }
 
-  const applyUrl = "https://chartersunion.com/apply";
+  const activeBullets = simulations.length > 0 ? simulations : bullets;
 
   return (
     <div className="my-4 rounded-xl border border-slate-300 bg-[#f5f5f5] text-slate-900 shadow-xl overflow-hidden max-w-2xl mx-auto p-4 sm:p-6">
       {/* Subject Header */}
       <div className="bg-slate-100 border border-slate-200 rounded-lg px-4 py-2.5 mb-4">
         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Subject Line</div>
-        <div className="text-sm font-bold text-slate-900 mt-0.5">{subject}</div>
+        <div className="text-sm font-bold text-slate-900 mt-0.5">{subject || "No subject"}</div>
       </div>
 
       {/* Main Clean Email White Card */}
       <div className="bg-white border border-slate-200 rounded-md overflow-hidden shadow-xs">
         {/* Top Header Logo with Clean Red Divider */}
         <div className="bg-white border-b-2 border-[#b01b2e] px-6 py-4 flex items-center justify-center">
-          <img src="/unnamed.png" alt="Charters Union of Business" className="h-10 w-auto object-contain" />
+          <img src="/unnamed.png" alt="Charters Union" className="h-10 w-auto object-contain" />
         </div>
 
         <div className="p-6 sm:p-8 space-y-4 text-[14px] text-[#222222] leading-relaxed">
           <p className="font-semibold text-slate-900">Dear Student,</p>
-          <p className="text-slate-800 leading-relaxed">{formatWhatsAppInline(intro)}</p>
+          <div className="text-slate-800 leading-relaxed space-y-3 whitespace-pre-wrap">{formatRichText(intro, false)}</div>
 
           {/* ── FORMAT 1: SIMULATIONS & CURRICULUM ── */}
           {format === "simulation" && (
             <>
-              <div className="pt-2">
-                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
-                  <u>{heading}</u>
+              {heading && (
+                <div className="pt-2">
+                  <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                    <u>{heading}</u>
+                  </div>
                 </div>
+              )}
+              {activeBullets.length > 0 && (
                 <ol className="list-decimal pl-5 space-y-2 text-slate-800">
-                  {(simulations.length > 0 ? simulations : bullets).map((s, idx) => (
+                  {activeBullets.map((s, idx) => (
                     <li key={idx} className="leading-relaxed">
-                      {formatWhatsAppInline(String(s).replace(/^\d+\.\s*/, ""))}
+                      {formatRichText(s, false)}
                     </li>
                   ))}
                 </ol>
-              </div>
+              )}
 
-              <div className="pt-2">
-                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
-                  <u>Programme Details:</u>
+              {programDetails && Object.keys(programDetails).length > 0 && (
+                <div className="pt-2">
+                  <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                    <u>Programme Details:</u>
+                  </div>
+                  <div className="text-xs sm:text-sm text-slate-800 space-y-1 leading-relaxed">
+                    {programDetails?.duration ? <div><strong>Dates:</strong> {programDetails.duration}</div> : null}
+                    {programDetails?.mode ? <div><strong>Mode:</strong> {programDetails.mode}</div> : null}
+                    {programDetails?.eligibility ? <div><strong>Eligibility:</strong> {programDetails.eligibility}</div> : null}
+                    {programDetails?.feeFinancing ? <div><strong>Fee:</strong> {programDetails.feeFinancing}</div> : null}
+                    {programDetails?.scholarship ? <div><strong>Scholarship:</strong> {programDetails.scholarship}</div> : null}
+                  </div>
                 </div>
-                <div className="text-xs sm:text-sm text-slate-800 space-y-1 leading-relaxed">
-                  <div><strong>Dates:</strong> {programDetails?.duration || "7 Months (3 Months Foundation + 4 Months In-Class Paid Internship)"}</div>
-                  <div><strong>Mode:</strong> {programDetails?.mode || "In-Class (Kolkata Hub) / Hybrid (Live Supervised Labs)"}</div>
-                  <div><strong>Eligibility:</strong> {programDetails?.eligibility || "Final-Year Students / Graduates / Working Professionals"}</div>
-                  <div><strong>Fee:</strong> {programDetails?.feeFinancing || "INR 35,000 – 50,000 | No-Cost EMI from INR 5,555/mo"}</div>
-                  <div><strong>Scholarship:</strong> {programDetails?.scholarship || "Up to INR 16,000 (Round 1 Intake)"}</div>
-                </div>
-              </div>
+              )}
             </>
           )}
 
           {/* ── FORMAT 2: MASTERCLASS & WEBINAR ── */}
           {format === "webinar" && (
             <>
-              <div className="pt-2">
-                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
-                  <u>{heading}</u>
+              {heading && (
+                <div className="pt-2">
+                  <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                    <u>{heading}</u>
+                  </div>
                 </div>
+              )}
+              {eventDetails && Object.keys(eventDetails).length > 0 && (
                 <div className="text-xs sm:text-sm text-slate-800 space-y-1 leading-relaxed mb-3">
-                  <div><strong>Date &amp; Time:</strong> {eventDetails?.date || "Upcoming Cohort Briefing"} ({eventDetails?.time || "10:00 AM – 11:30 AM"})</div>
-                  <div><strong>Platform:</strong> {eventDetails?.platform || "Campus & Live Interactive Zoom"}</div>
-                  <div><strong>Session Topic:</strong> {eventDetails?.topic || "Inside the Curriculum: Real-world mastery"}</div>
+                  {eventDetails?.date ? <div><strong>Date &amp; Time:</strong> {eventDetails.date}{eventDetails?.time ? ` (${eventDetails.time})` : ""}</div> : null}
+                  {eventDetails?.platform ? <div><strong>Platform:</strong> {eventDetails.platform}</div> : null}
+                  {eventDetails?.topic ? <div><strong>Session Topic:</strong> {eventDetails.topic}</div> : null}
                 </div>
+              )}
 
-                <div className="text-[14px] font-bold text-slate-900 mb-2">In this session we will cover:</div>
-                <ul className="list-disc pl-5 space-y-1.5 text-slate-800">
-                  {bullets.map((b, idx) => (
-                    <li key={idx} className="leading-relaxed">
-                      {formatWhatsAppInline(b)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {bullets.length > 0 && (
+                <>
+                  <div className="text-[14px] font-bold text-slate-900 mb-2">In this session we will cover:</div>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-800">
+                    {bullets.map((b, idx) => (
+                      <li key={idx} className="leading-relaxed">
+                        {formatRichText(b, false)}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </>
           )}
 
-          {/* ── FORMAT 3: TABULAR COMPARISON & EVENTS (Image 6 Style) ── */}
+          {/* ── FORMAT 3: TABULAR COMPARISON & EVENTS ── */}
           {format === "table" && (
             <>
-              <div className="pt-2">
-                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
-                  <u>{heading}</u>
+              {heading && (
+                <div className="pt-2">
+                  <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                    <u>{heading}</u>
+                  </div>
                 </div>
+              )}
+              {tableData?.rows?.length > 0 && (
                 <div className="overflow-x-auto my-3">
                   <table className="w-full text-left text-xs border-collapse border border-black bg-white">
                     <thead>
                       <tr className="bg-white border-b border-black text-black font-bold text-center">
-                        <th className="p-2.5 border-r border-black">Event Type</th>
-                        <th className="p-2.5 border-r border-black">Event</th>
-                        <th className="p-2.5 border-r border-black whitespace-nowrap">Date &amp; Time</th>
-                        <th className="p-2.5 border-r border-black whitespace-nowrap">Venue/Platform</th>
-                        <th className="p-2.5 whitespace-nowrap">Registration Link</th>
+                        {(tableData.headers || ["Event Type", "Event", "Date & Time", "Venue/Platform", "Registration Link"]).map((h, hIdx) => (
+                          <th key={hIdx} className="p-2.5 border-r border-black whitespace-nowrap">{h}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {(tableData?.rows || [
-                        ["Admissions Webinar", isDGM ? "Inside the Curriculum for DGM with GrowthX & Meta Pathways" : "Inside the Curriculum for CBA with CA/CFA Pathways", "14th January, 7 PM – 8 PM", "Zoom", "Link"],
-                        ["Campus Visit", isDGM ? "Campus Tour & Live Performance Lab Walkthrough" : "Campus Tour & Live ERP Lab Walkthrough", "17th January, 11 AM – 1 PM", "Kolkata Hub / Zoom", "Link"],
-                        ["Admissions Webinar", isDGM ? "Agency vs Brand Roles: What is better for you?" : "Corporate vs Consulting: What is better for you?", "18th January, 11 AM – 12 PM", "Zoom", "Link"]
-                      ]).map((r, rIdx) => (
+                      {tableData.rows.map((r, rIdx) => (
                         <tr key={rIdx} className="border-b border-black">
                           <td className="p-2.5 font-bold text-black border-r border-black text-center">{r[0]}</td>
                           <td className="p-2.5 text-black border-r border-black">{r[1]}</td>
                           <td className="p-2.5 text-black border-r border-black text-center whitespace-nowrap">{r[2]}</td>
                           <td className="p-2.5 text-black border-r border-black text-center whitespace-nowrap">{r[3] || "Zoom"}</td>
-                          <td className="p-2.5 font-bold text-[#b01b2e] underline text-center whitespace-nowrap">Link</td>
+                          <td className="p-2.5 font-bold text-[#b01b2e] underline text-center whitespace-nowrap">
+                            {r[4] && r[4] !== "Link" ? (
+                              <a href={r[4]} target="_blank" rel="noreferrer">{r[4].replace(/^https?:\/\//, "")}</a>
+                            ) : (
+                              <a href={applyUrl} target="_blank" rel="noreferrer">Register</a>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+              )}
 
-                {bullets.length > 0 && (
-                  <ul className="list-disc pl-5 space-y-1.5 text-slate-800 pt-2">
-                    {bullets.map((b, idx) => (
-                      <li key={idx} className="leading-relaxed">
-                        {formatWhatsAppInline(b)}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+              {bullets.length > 0 && (
+                <ul className="list-disc pl-5 space-y-1.5 text-slate-800 pt-2">
+                  {bullets.map((b, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      {formatRichText(b, false)}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </>
           )}
 
           {/* ── FORMAT 4 & 5 & 6: CASE STUDY / URGENCY / CLOSING NOTICE ── */}
           {(format === "case_study" || format === "urgency" || format === "final_call") && (
             <>
-              <div className="pt-2">
-                <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
-                  <u>{heading}</u>
+              {heading && (
+                <div className="pt-2">
+                  <div className="text-[15px] font-bold text-slate-900 mb-2 underline">
+                    <u>{heading}</u>
+                  </div>
                 </div>
-                {closingNotice && (
-                  <p className="text-slate-800 mb-3">{formatWhatsAppInline(closingNotice)}</p>
-                )}
+              )}
+              {closingNotice && (
+                <p className="text-slate-800 mb-3">{formatRichText(closingNotice, false)}</p>
+              )}
+              {bullets.length > 0 && (
                 <ul className="list-disc pl-5 space-y-2 text-slate-800">
                   {bullets.map((b, idx) => (
                     <li key={idx} className="leading-relaxed">
-                      {formatWhatsAppInline(b)}
+                      {formatRichText(b, false)}
                     </li>
                   ))}
                 </ul>
-              </div>
+              )}
             </>
           )}
 
+          {solution && (
+            <div className="pt-2">
+              <div className="border-l-4 border-[#b01b2e] bg-[#faf5f0] rounded-r px-4 py-3">
+                <div className="text-[13px] font-bold text-slate-900 mb-1">The Solution</div>
+                <p className="text-sm text-slate-800 leading-relaxed">{formatRichText(solution, false)}</p>
+              </div>
+            </div>
+          )}
+
           <p className="text-xs sm:text-sm text-slate-700 pt-2">
-            Check out the Programme Brochure <a href={applyUrl} target="_blank" rel="noreferrer" className="text-[#b01b2e] underline font-bold">here</a>.
+            Check out the Programme Brochure <a href={brochureUrl || applyUrl} target="_blank" rel="noreferrer" className="text-[#b01b2e] underline font-bold">here</a>.
           </p>
 
           {/* Clean Red Outline Button */}
@@ -306,19 +411,50 @@ function EmailVisualPreview({ item }) {
               rel="noreferrer"
               className="inline-block px-8 py-2.5 border-1.5 border-[#b01b2e] text-[#b01b2e] font-bold text-sm rounded bg-white hover:bg-red-50 transition"
             >
-              Click to Register
+              {ctaText}
             </a>
           </div>
 
-          {/* Helpline and Footer */}
-          <div className="pt-4 border-t border-slate-200 text-xs text-slate-600 space-y-3">
+          {/* Helpline */}
+          <div className="pt-4 text-xs text-slate-600 space-y-3">
             <p>
-              For any queries, please reach out to us at <span className="text-[#b01b2e] underline">admissions@chartersunion.com</span> or call <strong className="text-[#b01b2e]">+91 9836465083</strong>.
+              For any queries, please reach out to the Admissions Office or reply directly to this email.
             </p>
             <p className="text-slate-800">
               Warm regards,<br />
               <strong>Charters Union Admissions</strong>
             </p>
+          </div>
+
+          {/* Footer (matches the sent email — at the very bottom) */}
+          <div className="mt-6 pt-4 border-t-2 border-[#b01b2e]">
+            <div className="text-[11px] text-slate-400 uppercase tracking-wider mb-2">
+              Dive Deeper into our Undergraduate Programmes
+            </div>
+            <div className="text-sm font-semibold text-slate-700 mb-2">
+              <a href="https://chartersunion.com/certified-business-accountant" target="_blank" rel="noreferrer" className="text-[#b01b2e]">CBA™</a>
+              <span className="text-slate-300 mx-2">|</span>
+              <a href="https://chartersunion.com/digital-growth-&-marketing" target="_blank" rel="noreferrer" className="text-[#b01b2e]">DGM™</a>
+              <span className="text-slate-300 mx-2">|</span>
+              <a href="https://chartersunion.com/technology-&-business-management" target="_blank" rel="noreferrer" className="text-[#b01b2e]">TBM™</a>
+            </div>
+            <div className="text-xs text-slate-500 mb-3">
+              <a href="https://chartersunion.com/careers" target="_blank" rel="noreferrer" className="text-[#b01b2e] underline">Placement &amp; Careers</a>
+              <span className="text-slate-300 mx-2">|</span>
+              <a href="https://chartersunion.com/apply" target="_blank" rel="noreferrer" className="text-[#b01b2e] underline">Apply Now</a>
+            </div>
+            <div className="text-[11px] text-slate-400 italic pt-2 border-t border-slate-200 mb-2">
+              Your career deserves a real start. Join Charters Union and build it.
+            </div>
+            <div className="text-[10px] text-slate-400 leading-relaxed">
+              Copyright © 2026 Charters' Union. All Rights Reserved.
+              <span className="text-slate-300 mx-1">|</span>
+              <a href="https://chartersunion.com/privacy-policy" target="_blank" rel="noreferrer" className="text-slate-400 underline">Privacy Policy</a>
+              <span className="text-slate-300 mx-1">|</span>
+              <a href="https://chartersunion.com/terms-and-conditions" target="_blank" rel="noreferrer" className="text-slate-400 underline">Terms &amp; Conditions</a>
+              <span className="text-slate-300 mx-1">|</span>
+              <a href="https://chartersunion.com/privacy-policy" target="_blank" rel="noreferrer" className="text-slate-400 underline">Cookie Policy</a>
+            </div>
           </div>
         </div>
       </div>
