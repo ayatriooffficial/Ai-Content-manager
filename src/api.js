@@ -2,7 +2,8 @@ import axios from "axios";
 
 function getBaseURL() {
   if (import.meta.env.VITE_API_BASE_URL) {
-    return `${import.meta.env.VITE_API_BASE_URL}/api`;
+    const raw = String(import.meta.env.VITE_API_BASE_URL).trim().replace(/\/+$/, "");
+    return raw.endsWith("/api") ? raw : `${raw}/api`;
   }
   return "http://localhost:5003/api";
 }
