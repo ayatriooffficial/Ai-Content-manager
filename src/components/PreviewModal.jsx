@@ -163,20 +163,34 @@ function WhatsAppVisualPreview({ message, headline }) {
       </div>
 
       <div className="flex justify-start">
-        <div className="max-w-[90%] rounded-lg bg-[#1f2c34] p-3 text-sm text-[#e9edef] shadow-md">
-          <div className="space-y-2 leading-relaxed">
+        <div className="w-full max-w-[96%] sm:max-w-[90%] rounded-xl bg-[#1f2c34] p-3.5 text-sm text-[#e9edef] shadow-md border border-[#2a3942]">
+          <div className="space-y-2.5 leading-relaxed">
             {lines.map((line, i) => {
-              if (line.startsWith("> ")) {
+              const trimmed = line.trim();
+              if (!trimmed) {
+                return <div key={i} className="h-1" />;
+              }
+              if (trimmed.startsWith("> ")) {
                 return (
-                  <div key={i} className="border-l-4 border-[#00a884] bg-[#111b21] px-2.5 py-1.5 text-xs text-[#8696a0] rounded-r">
-                    {formatWhatsAppInline(line.replace(/^>\s*/, ""))}
+                  <div key={i} className="border-l-4 border-[#00a884] bg-[#111b21] px-3 py-2 text-xs text-[#8696a0] rounded-r my-1">
+                    {formatWhatsAppInline(trimmed.replace(/^>\s*/, ""))}
                   </div>
                 );
               }
-              return <p key={i}>{formatWhatsAppInline(line)}</p>;
+              if (trimmed.includes("🌐") || trimmed.includes("Visit:") || trimmed.includes("Apply:")) {
+                return (
+                  <div key={i} className="mt-2 pt-2 border-t border-[#2a3942]/60 text-[11px] sm:text-xs text-[#00a884] font-medium tracking-tight">
+                    {formatWhatsAppInline(trimmed)}
+                  </div>
+                );
+              }
+              return <p key={i} className="m-0">{formatWhatsAppInline(trimmed)}</p>;
             })}
           </div>
-          <div className="mt-2 text-right text-[10px] text-[#8696a0]">10:00 AM ✓✓</div>
+          <div className="mt-2.5 flex items-center justify-end gap-1 text-[10px] text-[#8696a0]">
+            <span>10:00 AM</span>
+            <span className="text-[#53bdeb]">✓✓</span>
+          </div>
         </div>
       </div>
     </div>
