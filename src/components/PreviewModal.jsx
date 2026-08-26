@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import StatusPill from "./StatusPill";
 
+// Shared poster set (same images used by email + WhatsApp bulk sends).
+// Picks one randomly so the preview matches the live "random per send" behavior.
+const POSTERS = ["1.jpg", "2.jpg", "3.jpg", "5.jpg", "6.jpg"];
+function randomPoster() {
+  return `/posters/${POSTERS[Math.floor(Math.random() * POSTERS.length)]}`;
+}
+
 function Field({ label, value }) {
   if (!value) return null;
   return (
@@ -56,23 +63,29 @@ const BOLD_KEYWORDS = [
   "Charters Union of Business", "Charters Union", "CBA™", "DGM™", "TBM™", "CBA", "DGM", "TBM",
   "Certified Business Accountant", "Digital Growth & Marketing", "Technology & Business Management",
   "AI Career Engine", "experiential learning", "hands-on simulations", "real-world simulations",
-  "100% In-Class Paid Internships", "in-class paid internships", "SAP S/4HANA", "TallyPrime",
-  "GST", "TDS", "GA4", "Meta", "Google Ads", "ROAS", "KPMG", "PwC", "EY", "Deloitte",
-  "Saudi Aramco", "₹5,555", "₹16,000", "No-Cost EMI", "scholarship", "Scholarship",
-  "97.7%", "92%", "98%", "95%", "placement rate", "Placement Rate", "26.5 LPA", "24.5 LPA",
-  "38.5 LPA", "CTC", "salary jump", "Salary Jump"
+  "100% In-Class Paid Internships", "in-class paid internships", "in-class paid internship",
+  "SAP S/4HANA", "TallyPrime", "GST", "TDS", "GA4", "Meta", "Google Ads", "ROAS",
+  "KPMG", "PwC", "EY", "Deloitte", "Saudi Aramco", "₹5,555", "₹16,000",
+  "No-Cost EMI", "scholarship", "Scholarship", "success fee", "Success Fee",
+  "97.7%", "92%", "98%", "95%", "placement rate", "Placement Rate",
+  "26.5 LPA", "24.5 LPA", "38.5 LPA", "CTC", "salary jump", "Salary Jump",
+  "7 countries", "7 Countries", "3.05x", "3.05X", "KVS"
 ];
 
 function boldKeywords(text) {
   if (!text) return text;
   let out = String(text);
-  for (const kw of BOLD_KEYWORDS) {
+  // Longest-first so "100% In-Class Paid Internships" wins over the shorter
+  // "in-class paid internships" and both don't get half-bolded.
+  const sorted = [...BOLD_KEYWORDS].sort((a, b) => b.length - a.length);
+  for (const kw of sorted) {
     const needsWordBoundary = kw.replace(/[^a-zA-Z0-9]/g, "").length <= 4;
     const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const pattern = needsWordBoundary ? `(?<![\\w*])${escaped}(?![\\w])` : escaped;
-    const re = new RegExp(`(?<!\\*)\\*?${pattern}\\*?(?!\\*)`, "gi");
+    // Don't match inside/adjacent to an existing **bold** or *bold* span.
+    const pattern = needsWordBoundary ? `(?<![\\w*])${escaped}(?![\\w*])` : escaped;
+    const re = new RegExp(`(?<![\\w*])${pattern}(?![\\w*])`, "gi");
     out = out.replace(re, (m) => {
-      const clean = m.replace(/\*/g, "").trim();
+      const clean = m.trim();
       if (!clean) return m;
       return `**${clean}**`;
     });
@@ -148,9 +161,21 @@ function formatWhatsAppInline(text) {
   return formatRichText(text, true);
 }
 
+// Detects a WhatsApp section heading: a short line that is entirely bold
+// (*Heading:*), typically ending with a colon — e.g. the problem heading,
+// points heading, and solution heading in the 7-part layout.
+function isWhatsAppHeading(trimmed) {
+  if (!trimmed || trimmed.length > 60) return false;
+  const boldMatch = trimmed.match(/^\*([^*]+)\*$/);
+  if (!boldMatch) return false;
+  const inner = boldMatch[1].trim();
+  return inner.length > 0 && inner.length <= 50 && /:$/.test(inner);
+}
+
 function WhatsAppVisualPreview({ message, headline }) {
   const cleanMsg = message || headline || "";
   const lines = cleanMsg.split("\n");
+  const poster = randomPoster();
 
   return (
     <div className="my-4 rounded-xl border border-[#222e35] bg-[#0b141a] p-4 shadow-xl">
@@ -164,6 +189,10 @@ function WhatsAppVisualPreview({ message, headline }) {
 
       <div className="flex justify-start">
         <div className="w-full max-w-[96%] sm:max-w-[90%] rounded-xl bg-[#1f2c34] p-3.5 text-sm text-[#e9edef] shadow-md border border-[#2a3942]">
+          {/* Poster image — same random set as the live WhatsApp sends */}
+          <div className="mb-3 overflow-hidden rounded-lg">
+            <img src={poster} alt="Charters Union" className="w-full h-auto object-cover" style={{ aspectRatio: "16/9" }} />
+          </div>
           <div className="space-y-2.5 leading-relaxed">
             {lines.map((line, i) => {
               const trimmed = line.trim();
@@ -181,6 +210,17 @@ function WhatsAppVisualPreview({ message, headline }) {
                 return (
                   <div key={i} className="mt-2 pt-2 border-t border-[#2a3942]/60 text-[11px] sm:text-xs text-[#00a884] font-medium tracking-tight">
                     {formatWhatsAppInline(trimmed)}
+                  </div>
+                );
+              }
+              if (isWhatsAppHeading(trimmed)) {
+                // Section heading (problem/points/solution) — distinct styling
+                return (
+                  <div key={i} className="mt-2.5 mb-0.5 flex items-center gap-2">
+                    <div className="h-4 w-1 rounded-full bg-[#00a884]" />
+                    <div className="text-[13px] font-bold text-[#e9edef] tracking-tight">
+                      {formatWhatsAppInline(trimmed)}
+                    </div>
                   </div>
                 );
               }
@@ -247,9 +287,9 @@ function EmailVisualPreview({ item }) {
 
       {/* Main Clean Email White Card */}
       <div className="bg-white border border-slate-200 rounded-md overflow-hidden shadow-xs">
-        {/* Top Header Logo with Clean Red Divider */}
-        <div className="bg-white border-b-2 border-[#b01b2e] px-6 py-4 flex items-center justify-center">
-          <img src="/unnamed.png" alt="Charters Union" className="h-10 w-auto object-contain" />
+        {/* Hero Banner Header Image with Red Divider */}
+        <div className="w-full border-b-2 border-[#b01b2e]">
+          <img src={randomPoster()} alt="Charters Union banner" className="w-full h-auto object-cover" style={{ aspectRatio: "16/9" }} />
         </div>
 
         <div className="p-6 sm:p-8 space-y-4 text-[14px] text-[#222222] leading-relaxed">
