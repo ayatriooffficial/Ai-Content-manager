@@ -106,6 +106,7 @@ function formatRichText(text, isDark = false) {
   str = str.replace(/<i>(.*?)<\/i>/gi, "_$1_");
 
   // Match **double-star bold**, *single-star bold*, `code`, _italics_, ~strikethrough~
+  // (No more *_..._* combined bold+italic — the generator now uses plain *bold* only.)
   const tokenRegex = /(```[\s\S]*?```|`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|~[^~]+~)/g;
   const parts = str.split(tokenRegex);
 
@@ -161,12 +162,12 @@ function formatWhatsAppInline(text) {
   return formatRichText(text, true);
 }
 
-// Detects a WhatsApp section heading: a short line that is entirely bold
-// (*Heading:*), typically ending with a colon — e.g. the problem heading,
-// points heading, and solution heading in the 7-part layout.
+// Detects a WhatsApp section heading: a short line that is entirely
+// bold (*Heading:*) — ending with a colon, e.g. the points heading and
+// solution heading.
 function isWhatsAppHeading(trimmed) {
   if (!trimmed || trimmed.length > 60) return false;
-  const boldMatch = trimmed.match(/^\*([^*]+)\*$/);
+  const boldMatch = trimmed.match(/^\*([^*]+?)\*$/);
   if (!boldMatch) return false;
   const inner = boldMatch[1].trim();
   return inner.length > 0 && inner.length <= 50 && /:$/.test(inner);
